@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Store - Products</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo">SimpleStore</a>
+    <nav>
+      <a href="index.html">Products</a>
+      <a href="cart.html">Cart <span id="cart-count" class="badge">0</span></a>
+      <span id="auth-links"></span>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Our Products</h1>
+    <div id="product-grid" class="grid"></div>
+  </main>
+
+  <script src="js/common.js"></script>
+  <script>
+    async function loadProducts() {
+      const grid = document.getElementById('product-grid');
+      try {
+        const products = await api('/api/products');
+        grid.innerHTML = products.map(p => `
+          <div class="card">
+            <h3>${esc(p.name)}</h3>
+            <p class="muted">${esc(p.description)}</p>
+            <p class="price">${formatPrice(p.price)}</p>
+            <p class="muted small">${p.stock > 0 ? p.stock + ' in stock' : 'Out of stock'}</p>
+            <a class="btn" href="product.html?id=${p.id}">View details</a>
+          </div>`).join('');
+      } catch (err) {
+        grid.innerHTML = '<p>Could not load products. Is the server running?</p>';
+      }
+    }
+    loadProducts();
+    updateNav();
+  </script>
+</body>
+</html>

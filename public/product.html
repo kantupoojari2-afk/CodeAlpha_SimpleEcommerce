@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details - Simple Store</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo">SimpleStore</a>
+    <nav>
+      <a href="index.html">Products</a>
+      <a href="cart.html">Cart <span id="cart-count" class="badge">0</span></a>
+      <span id="auth-links"></span>
+    </nav>
+  </header>
+
+  <main>
+    <a href="index.html">&larr; Back to products</a>
+    <div id="product" class="detail"></div>
+  </main>
+
+  <script src="js/common.js"></script>
+  <script>
+    const id = new URLSearchParams(window.location.search).get('id');
+    const container = document.getElementById('product');
+
+    async function loadProduct() {
+      try {
+        const p = await api(`/api/products/${id}`);
+        container.innerHTML = `
+          <h1>${esc(p.name)}</h1>
+          <p>${esc(p.description)}</p>
+          <p class="price">${formatPrice(p.price)}</p>
+          <p class="muted">${p.stock > 0 ? p.stock + ' available' : 'Out of stock'}</p>
+          <div class="qty-row">
+            <label for="qty">Quantity</label>
+            <input type="number" id="qty" min="1" max="${p.stock}" value="1" ${p.stock === 0 ? 'disabled' : ''}>
+          </div>
+          <button class="btn" id="add-btn" ${p.stock === 0 ? 'disabled' : ''}>Add to cart</button>
+          <p id="msg" class="msg"></p>`;
+
+        document.getElementById('add-btn').addEventListener('click', () => {
+          const qty = parseInt(document.getElementById('qty').value, 10);
+          if (!qty || qty < 1 || qty > p.stock) {
+            document.getElementById('msg').textContent = 'Please choose a valid quantity.';
+            return;
+          }
+          addToCart(p, qty);
+          document.getElementById('msg').textContent = `${p.name} added to cart!`;
+        });
+      } catch (err) {
+        container.innerHTML = '<p>Product not found.</p>';
+      }
+    }
+
+    loadProduct();
+    updateNav();
+  </script>
+</body>
+</html>

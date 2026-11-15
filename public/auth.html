@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login / Register - Simple Store</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo">SimpleStore</a>
+    <nav>
+      <a href="index.html">Products</a>
+      <a href="cart.html">Cart <span id="cart-count" class="badge">0</span></a>
+    </nav>
+  </header>
+
+  <main class="auth-box">
+    <div class="tabs">
+      <button id="tab-login" class="tab active">Login</button>
+      <button id="tab-register" class="tab">Register</button>
+    </div>
+
+    <form id="login-form" class="form">
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button class="btn" type="submit">Login</button>
+    </form>
+
+    <form id="register-form" class="form hidden">
+      <input type="text" name="name" placeholder="Full name" required>
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password (min 6 characters)" minlength="6" required>
+      <button class="btn" type="submit">Create account</button>
+    </form>
+
+    <p id="msg" class="msg"></p>
+  </main>
+
+  <script src="js/common.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get('next') || 'index.html';
+    const msg = document.getElementById('msg');
+
+    function showTab(which) {
+      const isLogin = which === 'login';
+      document.getElementById('login-form').classList.toggle('hidden', !isLogin);
+      document.getElementById('register-form').classList.toggle('hidden', isLogin);
+      document.getElementById('tab-login').classList.toggle('active', isLogin);
+      document.getElementById('tab-register').classList.toggle('active', !isLogin);
+      msg.textContent = '';
+    }
+    document.getElementById('tab-login').addEventListener('click', () => showTab('login'));
+    document.getElementById('tab-register').addEventListener('click', () => showTab('register'));
+
+    function bindForm(formId, endpoint) {
+      document.getElementById(formId).addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target));
+        try {
+          await api(endpoint, { method: 'POST', body: JSON.stringify(data) });
+          window.location.href = next;
+        } catch (err) {
+          msg.textContent = err.message;
+        }
+      });
+    }
+    bindForm('login-form', '/api/login');
+    bindForm('register-form', '/api/register');
+    updateCartCount();
+  </script>
+</body>
+</html>

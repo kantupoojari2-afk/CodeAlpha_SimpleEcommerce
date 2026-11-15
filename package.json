@@ -1,0 +1,15 @@
+{
+  "name": "codealpha-simple-ecommerce",
+  "version": "1.0.0",
+  "description": "Simple e-commerce store built with HTML, CSS, JavaScript, Express.js and SQLite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0"
+  }
+}

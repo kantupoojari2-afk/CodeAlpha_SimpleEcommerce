@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Cart - Simple Store</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo">SimpleStore</a>
+    <nav>
+      <a href="index.html">Products</a>
+      <a href="cart.html">Cart <span id="cart-count" class="badge">0</span></a>
+      <span id="auth-links"></span>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Your Cart</h1>
+    <div id="cart-view"></div>
+  </main>
+
+  <script src="js/common.js"></script>
+  <script>
+    function render() {
+      const cart = getCart();
+      const view = document.getElementById('cart-view');
+
+      if (cart.length === 0) {
+        view.innerHTML = '<p>Your cart is empty. <a href="index.html">Continue shopping</a></p>';
+        return;
+      }
+
+      const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      view.innerHTML = `
+        <table class="cart-table">
+          <thead><tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead>
+          <tbody>
+            ${cart.map(i => `
+              <tr>
+                <td>${esc(i.name)}</td>
+                <td>${formatPrice(i.price)}</td>
+                <td>
+                  <button class="qty-btn" data-id="${i.id}" data-delta="-1">-</button>
+                  ${i.quantity}
+                  <button class="qty-btn" data-id="${i.id}" data-delta="1">+</button>
+                </td>
+                <td>${formatPrice(i.price * i.quantity)}</td>
+                <td><button class="remove-btn" data-id="${i.id}">Remove</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="checkout">
+          <p class="total">Total: ${formatPrice(total)}</p>
+          <button class="btn" id="checkout-btn">Place order</button>
+          <p id="msg" class="msg"></p>
+        </div>`;
+
+      view.querySelectorAll('.qty-btn').forEach(btn =>
+        btn.addEventListener('click', () => changeQty(Number(btn.dataset.id), Number(btn.dataset.delta))));
+      view.querySelectorAll('.remove-btn').forEach(btn =>
+        btn.addEventListener('click', () => removeFromCart(Number(btn.dataset.id))));
+      document.getElementById('checkout-btn').addEventListener('click', checkout);
+    }
+
+    function changeQty(id, delta) {
+      const cart = getCart();
+      const item = cart.find(i => i.id === id);
+      if (!item) return;
+      item.quantity += delta;
+      saveCart(item.quantity <= 0 ? cart.filter(i => i.id !== id) : cart);
+      render();
+    }
+
+    function removeFromCart(id) {
+      saveCart(getCart().filter(i => i.id !== id));
+      render();
+    }
+
+    async function checkout() {
+      const msg = document.getElementById('msg');
+      const me = await api('/api/me');
+      if (!me) {
+        window.location.href = 'auth.html?next=cart.html';
+        return;
+      }
+      try {
+        const items = getCart().map(i => ({ productId: i.id, quantity: i.quantity }));
+        const result = await api('/api/orders', { method: 'POST', body: JSON.stringify({ items }) });
+        saveCart([]);
+        document.getElementById('cart-view').innerHTML = `
+          <div class="card">
+            <h2>Thank you!</h2>
+            <p>Your order <strong>#${result.orderId}</strong> has been placed.</p>
+            <p>Total paid: ${formatPrice(result.total)}</p>
+            <a class="btn" href="index.html">Continue shopping</a>
+          </div>`;
+        updateCartCount();
+      } catch (err) {
+        msg.textContent = err.message;
+      }
+    }
+
+    render();
+    updateNav();
+  </script>
+</body>
+</html>
